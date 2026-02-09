@@ -3,7 +3,8 @@
             [com.adaiasmagdiel.raytracer.vec3 :as vec3]
             [com.adaiasmagdiel.raytracer.ray :as ray]
             [com.adaiasmagdiel.raytracer.sphere :as sphere]
-            [com.adaiasmagdiel.raytracer.hittable :as h]))
+            [com.adaiasmagdiel.raytracer.hittable :as h]
+            [com.adaiasmagdiel.utils :as utils]))
 
 (def focal-length 1.0)
 (def camera-center (vec3/create 0 0 0))
@@ -21,6 +22,9 @@
                           (vec3/scalar-div viewport-v 2)))
 (def pixel00-loc (vec3/add viewport-upper-left (vec3/scalar-mul (vec3/add pixel-delta-u pixel-delta-v) 0.5)))
 
+(def world [(sphere/create (vec3/create 0 0 -1) 0.5)
+            (sphere/create (vec3/create 0 -100.5 -1) 100)])
+
 (defn paint-sky [r]
   (let [unity-direction (vec3/unit (:direction r))
         a (* 0.5 (+ 1.0 (vec3/y unity-direction)))]
@@ -34,14 +38,16 @@
       (vec3/scalar-mul (vec3/add n [1 1 1]) 0.5))
     (paint-sky ray)))
 
+(defn write-color [color]
+  (map (fn [c]
+         (int (* 256 (utils/clamp c 0.0 0.999))))
+       color))
+
 (defn compute-pixel-color [x y]
   (let [pixel-center
         (vec3/add (vec3/scalar-mul pixel-delta-v y)
                   (vec3/add pixel00-loc (vec3/scalar-mul pixel-delta-u x)))
         ray-direction (vec3/sub pixel-center camera-center)
-        r (ray/create camera-center ray-direction)
-        
-        world [(sphere/create (vec3/create 0 0 -1) 0.5)
-               (sphere/create (vec3/create 0 -100.5 -1) 100)]]
+        r (ray/create camera-center ray-direction)]
 
-    (map #(int (* 255.999 %)) (ray-color r world))))
+    (write-color (ray-color r world))))
