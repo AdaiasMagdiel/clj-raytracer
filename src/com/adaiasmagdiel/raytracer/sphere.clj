@@ -4,10 +4,6 @@
             [com.adaiasmagdiel.raytracer.ray :as ray]
             [clojure.math :as math]))
 
-(defn create [center radius]
-  {:center center
-   :radius radius})
-
 (defn hit
   [sphere ray tmin tmax]
   (let [center (:center sphere)
@@ -41,3 +37,9 @@
                                 radius)
                 hr (h/hit-record t p outward-normal false)]
             (h/set-face-normal hr ray outward-normal)))))))
+
+(defn create [center radius]
+  {:type :sphere
+   :center center
+   :radius radius
+   :hit hit})
