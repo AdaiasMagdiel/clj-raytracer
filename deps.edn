@@ -1,0 +1,7 @@
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.12.4"}
+								quil/quil {:mvn/version "4.3.1563"}}
+ :aliases
+ {:run {:main-opts ["-m" "com.adaiasmagdiel.raytracer"]}
+  :build {:deps {io.github.clojure/tools.build {:mvn/version "0.10.12"}}
+          :ns-default build}}}
