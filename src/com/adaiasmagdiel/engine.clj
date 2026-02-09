@@ -1,5 +1,6 @@
 (ns com.adaiasmagdiel.engine
-  (:require [com.adaiasmagdiel.settings :as s]
+  (:require [clojure.math :as math]
+            [com.adaiasmagdiel.settings :as s]
             [com.adaiasmagdiel.raytracer.vec3 :as vec3]
             [com.adaiasmagdiel.raytracer.ray :as ray]))
 
@@ -33,12 +34,16 @@
         b (* -2.0 (vec3/dot ray-direction oc))
         c (- (vec3/dot oc oc) (* radius radius))
         discriminant (- (* b b) (* 4 a c))]
-    (>= discriminant 0)))
+    (if (< discriminant 0)
+      -1.0
+      (/ (- (* -1 b) (math/sqrt discriminant)) (* 2.0 a)))))
 
 (defn ray-color [r]
-  (if (hit-sphere (vec3/create 0 0 -1) 0.5 r)
-    [1 0 0]
-    (paint-sky r)))
+  (let [t (hit-sphere (vec3/create 0 0 -1) 0.5 r)]
+    (if (> t 0.0)
+      (let [N (vec3/unit (vec3/sub (ray/at r t) (vec3/create 0 0 -1)))]
+        (vec3/scalar-mul [(+ 1 (vec3/x N)) (+ 1 (vec3/y N)) (+ 1 (vec3/z N))] 0.5))
+      (paint-sky r))))
 
 (defn compute-pixel-color [x y]
   (let [pixel-center
