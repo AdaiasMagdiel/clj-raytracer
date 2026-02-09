@@ -19,11 +19,27 @@ You need the [Clojure CLI tool](https://clojure.org/guides/install_clojure) inst
 
 ## How to Run
 
-To start the raytracer and see the output window:
+### Preview
+
+To use Quil to render a live preview:
 
 ```bash
 clj -M:run
+```
 
+### Image
+
+To generate an image:
+
+```bash
+clj -M:run --image
+```
+
+This will generate a `.ppm` image in the project root directory.
+You can convert it to another format using any image conversion tool, such as `ffmpeg`:
+
+```bash
+ffmpeg -i image.ppm image.webp
 ```
 
 ## Building
