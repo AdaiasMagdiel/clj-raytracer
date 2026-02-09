@@ -8,6 +8,8 @@
 
 (def focal-length 1.0)
 (def camera-center (vec3/create 0 0 0))
+(def samples-per-pixel 10)
+(def pixel-samples-scale (/ 1.0 samples-per-pixel))
 
 (def viewport-u (vec3/create s/VIEWPORT_WIDTH 0 0))
 (def viewport-v (vec3/create 0 (* -1 s/VIEWPORT_HEIGHT) 0))
@@ -43,11 +45,26 @@
          (int (* 256 (utils/clamp c 0.0 0.999))))
        color))
 
-(defn compute-pixel-color [x y]
-  (let [pixel-center
-        (vec3/add (vec3/scalar-mul pixel-delta-v y)
-                  (vec3/add pixel00-loc (vec3/scalar-mul pixel-delta-u x)))
-        ray-direction (vec3/sub pixel-center camera-center)
-        r (ray/create camera-center ray-direction)]
+(defn get-ray [i j]
+  (let [u (+ i (rand))
+        v (+ j (rand))
+        pixel-center
+        (vec3/add (vec3/scalar-mul pixel-delta-v v)
+                  (vec3/add pixel00-loc
+                            (vec3/scalar-mul pixel-delta-u u)))
+        direction (vec3/sub pixel-center camera-center)]
+    (ray/create camera-center direction)))
 
-    (write-color (ray-color r world))))
+(defn pixel-color [i j]
+  (let [accumulated
+        (reduce
+         (fn [color _]
+           (let [r (get-ray i j)]
+             (vec3/add color (ray-color r world))))
+         (vec3/create 0 0 0)
+         (range samples-per-pixel))]
+    (vec3/scalar-mul accumulated pixel-samples-scale)))
+
+(defn compute-pixel-color [x y]
+  (write-color (pixel-color x y)))
+
