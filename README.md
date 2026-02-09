@@ -10,7 +10,6 @@ This project explores functional programming patterns applied to computer graphi
 
 ## Features
 
-- **Functional Vector Math:** High-performance 3D vector operations using Clojure's destructuring.
 - **Real-time Preview:** Integrated with Quil to visualize the rendering process directly in a window.
 - **Pure Clojure:** Built with the latest Clojure 1.12 features and `tools.build`.
 
