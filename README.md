@@ -1,5 +1,9 @@
 # clj-raytracer
 
+<p align="center">
+  <img src="image.webp" width="1280" height="720">
+</p>
+
 A pure Clojure implementation of the famous ["Ray Tracing in One Weekend"](https://raytracing.github.io/books/RayTracingInOneWeekend.html) book. 
 
 This project explores functional programming patterns applied to computer graphics, using [Quil](https://quil.info/) (a Clojure wrapper for Processing) for real-time rendering and visualization.
