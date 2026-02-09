@@ -1,8 +1,7 @@
 (ns com.adaiasmagdiel.image
-	(:require [quil.core :as q]
-											[clojure.string :as str]
-											[com.adaiasmagdiel.settings :as s]
-											[com.adaiasmagdiel.engine :as engine]))
+  (:require [clojure.string :as str]
+            [com.adaiasmagdiel.settings :as s]
+            [com.adaiasmagdiel.engine :as engine]))
 
 (def MAX_COLS 50)
 
