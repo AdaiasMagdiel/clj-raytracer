@@ -19,12 +19,26 @@
 																										(vec3/scalar-div viewport-v 2)))
 (def pixel00-loc (vec3/add viewport-upper-left (vec3/scalar-mul (vec3/add pixel-delta-u pixel-delta-v) 0.5)))
 
-(defn ray-color [r]
+(defn paint-sky [r]
 	(let [unity-direction (vec3/unit (:direction r))
 							a (* 0.5 (+ 1.0 (vec3/y unity-direction)))]
-			(vec3/add 
-				(vec3/scalar-mul (vec3/create 1.0 1.0 1.0) (- 1.0 a))
-				(vec3/scalar-mul (vec3/create 0.5 0.7 1.0) a))))
+		(vec3/add 
+			(vec3/scalar-mul (vec3/create 1.0 1.0 1.0) (- 1.0 a))
+			(vec3/scalar-mul (vec3/create 0.5 0.7 1.0) a))))
+
+(defn hit-sphere [center radius r]
+	(let [oc (vec3/sub center (:origin r))
+							ray-direction (:direction r)
+							a (vec3/dot ray-direction ray-direction)
+							b (* (* -1 2.0) (vec3/dot ray-direction oc))
+							c (- (vec3/dot oc oc) (* radius radius))
+							discriminant (- (* b b) (* 4 a c))]
+		(>= discriminant 0)))
+
+(defn ray-color [r]
+	(if (hit-sphere (vec3/create 0 0 -1) 0.5 r)
+		[1 0 0]
+		(paint-sky r)))
 
 (defn compute-pixel-color [x y]
 	(let [pixel-center
