@@ -1,8 +1,9 @@
 (ns com.adaiasmagdiel.engine
-  (:require [clojure.math :as math]
-            [com.adaiasmagdiel.settings :as s]
+  (:require [com.adaiasmagdiel.settings :as s]
             [com.adaiasmagdiel.raytracer.vec3 :as vec3]
-            [com.adaiasmagdiel.raytracer.ray :as ray]))
+            [com.adaiasmagdiel.raytracer.ray :as ray]
+            [com.adaiasmagdiel.raytracer.sphere :as sphere]
+            [com.adaiasmagdiel.raytracer.hittable :as h]))
 
 (def focal-length 1.0)
 (def camera-center (vec3/create 0 0 0))
@@ -27,29 +28,20 @@
      (vec3/scalar-mul (vec3/create 1.0 1.0 1.0) (- 1.0 a))
      (vec3/scalar-mul (vec3/create 0.5 0.7 1.0) a))))
 
-(defn hit-sphere [center radius r]
-  (let [oc (vec3/sub center (:origin r))
-        ray-direction (:direction r)
-        a (vec3/dot ray-direction ray-direction)
-        b (* -2.0 (vec3/dot ray-direction oc))
-        c (- (vec3/dot oc oc) (* radius radius))
-        discriminant (- (* b b) (* 4 a c))]
-    (if (< discriminant 0)
-      -1.0
-      (/ (- (* -1 b) (math/sqrt discriminant)) (* 2.0 a)))))
-
-(defn ray-color [r]
-  (let [t (hit-sphere (vec3/create 0 0 -1) 0.5 r)]
-    (if (> t 0.0)
-      (let [N (vec3/unit (vec3/sub (ray/at r t) (vec3/create 0 0 -1)))]
-        (vec3/scalar-mul [(+ 1 (vec3/x N)) (+ 1 (vec3/y N)) (+ 1 (vec3/z N))] 0.5))
-      (paint-sky r))))
+(defn ray-color [ray world]
+  (if-let [rec (h/hit-world world ray 0.001 Double/POSITIVE_INFINITY)]
+    (let [n (:normal rec)]
+      (vec3/scalar-mul (vec3/add n [1 1 1]) 0.5))
+    (paint-sky ray)))
 
 (defn compute-pixel-color [x y]
   (let [pixel-center
         (vec3/add (vec3/scalar-mul pixel-delta-v y)
                   (vec3/add pixel00-loc (vec3/scalar-mul pixel-delta-u x)))
         ray-direction (vec3/sub pixel-center camera-center)
-        r (ray/create camera-center ray-direction)]
+        r (ray/create camera-center ray-direction)
+        
+        world [(sphere/create (vec3/create 0 0 -1) 0.5)
+               (sphere/create (vec3/create 0 -100.5 -1) 100)]]
 
-    (map #(int (* 255.999 %)) (ray-color r))))
+    (map #(int (* 255.999 %)) (ray-color r world))))
