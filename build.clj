@@ -2,7 +2,7 @@
   (:require [clojure.tools.build.api :as b]))
 
 ;; Project metadata
-(def lib 'meu-projeto/app)
+(def lib 'com.adaiasmagdiel/raytracer)
 (def version "0.1.0-SNAPSHOT")
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
