@@ -68,3 +68,10 @@
 
 (defn reflect [v n]
   (sub v (scalar-mul n (* 2 (dot v n)))))
+
+(defn refract [uv n etai-over-etat]
+  (let [cos-theta (min (dot (scalar-mul uv -1) n) 1.0)
+        r-out-perp (scalar-mul (add uv (scalar-mul n cos-theta)) etai-over-etat)
+        r-out-parallel (scalar-mul n (* -1 (math/sqrt (abs (- 1.0 (length-sq r-out-perp))))))]
+    
+    (add r-out-perp r-out-parallel)))

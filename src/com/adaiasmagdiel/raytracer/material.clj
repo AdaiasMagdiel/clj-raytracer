@@ -39,3 +39,17 @@
         {:scattered   scattered-ray
          :attenuation albedo
          :hit?        true}))))
+
+(defrecord Dielectric [refraction-index]
+  Material
+  (scatter [this ray-in hit-record]
+    (let [attenuation [1.0 1.0 1.0]
+          ri          (if (:front-face hit-record)
+                        (/ 1.0 refraction-index)
+                        refraction-index)
+          unit-dir    (vec3/unit (:direction ray-in))
+          refracted (vec3/refract unit-dir (:normal hit-record) ri)]
+      
+      {:scattered   (ray/create (:point hit-record) refracted)
+       :attenuation attenuation
+       :hit?        true})))
