@@ -10,14 +10,37 @@
 (defn y [v] (nth v 1))
 (defn z [v] (nth v 2))
 
-(defn add [& vecs]
-  (apply mapv + vecs))
-(defn sub [& vecs]
-  (apply mapv - vecs))
-(defn mul [& vecs]
-  (apply mapv * vecs))
-(defn div [& vecs]
-  (apply mapv / vecs))
+(defn add
+  ([v1 v2]
+   (let [[x1 y1 z1] v1
+         [x2 y2 z2] v2]
+     [(+ x1 x2) (+ y1 y2) (+ z1 z2)]))
+  ([v1 v2 & more]
+   (apply mapv + v1 v2 more)))
+
+(defn sub
+  ([v1 v2]
+   (let [[x1 y1 z1] v1
+         [x2 y2 z2] v2]
+     [(- x1 x2) (- y1 y2) (- z1 z2)]))
+  ([v1 v2 & more]
+   (apply mapv - v1 v2 more)))
+
+(defn mul
+  ([v1 v2]
+   (let [[x1 y1 z1] v1
+         [x2 y2 z2] v2]
+     [(* x1 x2) (* y1 y2) (* z1 z2)]))
+  ([v1 v2 & more]
+   (apply mapv * v1 v2 more)))
+
+(defn div
+  ([v1 v2]
+   (let [[x1 y1 z1] v1
+         [x2 y2 z2] v2]
+     [(/ x1 x2) (/ y1 y2) (/ z1 z2)]))
+  ([v1 v2 & more]
+   (apply mapv / v1 v2 more)))
 
 (defn scalar-mul [[x y z] t]
   (vector (* t x) (* t y) (* t z)))
