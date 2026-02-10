@@ -8,26 +8,9 @@
             [com.adaiasmagdiel.raytracer.material :as mat]
             [clojure.math :as math]))
 
-(def focal-length 1.0)
-(def camera-center (vec3/create 0 0 0))
-(def samples-per-pixel 10)
-(def pixel-samples-scale (/ 1.0 samples-per-pixel))
-(def max-depth 10)
+(def ^:const max-depth 10)
 
-(def viewport-u (vec3/create s/VIEWPORT_WIDTH 0 0))
-(def viewport-v (vec3/create 0 (* -1 s/VIEWPORT_HEIGHT) 0))
-
-(def pixel-delta-u (vec3/scalar-div viewport-u s/WIDTH))
-(def pixel-delta-v (vec3/scalar-div viewport-v s/HEIGHT))
-
-(def viewport-upper-left (vec3/sub
-                          camera-center
-                          (vec3/create 0 0 focal-length)
-                          (vec3/scalar-div viewport-u 2)
-                          (vec3/scalar-div viewport-v 2)))
-(def pixel00-loc (vec3/add viewport-upper-left (vec3/scalar-mul (vec3/add pixel-delta-u pixel-delta-v) 0.5)))
-
-(def world [(sphere/create (vec3/create 0.0 -100.5 -1.0) 100 (mat/->Lambertian [0.8 0.8 0]))
+(def ^:const world [(sphere/create (vec3/create 0.0 -100.5 -1.0) 100 (mat/->Lambertian [0.8 0.8 0]))
             (sphere/create (vec3/create 0.0 0.0 -1.2) 0.5 (mat/->Lambertian [0.1 0.2 0.5]))
             (sphere/create (vec3/create -1.0 0.0 -1.0) 0.5 (mat/->Dielectric 1.50))
             (sphere/create (vec3/create -1.0 0.0 -1.0) 0.4 (mat/->Dielectric (/ 1.0 1.50)))
@@ -73,11 +56,11 @@
   (let [u (+ i (rand))
         v (+ j (rand))
         pixel-center
-        (vec3/add (vec3/scalar-mul pixel-delta-v v)
-                  (vec3/add pixel00-loc
-                            (vec3/scalar-mul pixel-delta-u u)))
-        direction (vec3/sub pixel-center camera-center)]
-    (ray/create camera-center direction)))
+        (vec3/add (vec3/scalar-mul s/pixel-delta-v v)
+                  (vec3/add s/pixel00-loc
+                            (vec3/scalar-mul s/pixel-delta-u u)))
+        direction (vec3/sub pixel-center s/camera-center)]
+    (ray/create s/camera-center direction)))
 
 (defn pixel-color [i j]
   (let [accumulated
@@ -86,8 +69,8 @@
            (let [r (get-ray i j)]
              (vec3/add color (ray-color r world))))
          (vec3/create 0 0 0)
-         (range samples-per-pixel))]
-    (vec3/scalar-mul accumulated pixel-samples-scale)))
+         (range s/samples-per-pixel))]
+    (vec3/scalar-mul accumulated s/pixel-samples-scale)))
 
 (defn compute-pixel-color [x y]
   (write-color (pixel-color x y)))
