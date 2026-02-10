@@ -1,9 +1,10 @@
 (ns com.adaiasmagdiel.raytracer.vec3
-	(:require [clojure.math :as math]))
+  (:require [clojure.math :as math]
+            [com.adaiasmagdiel.utils :as utils]))
 
 (defn create
-	([] (create 0 0 0))
-	([x y z] (vector x y z)))
+  ([] (create 0 0 0))
+  ([x y z] (vector x y z)))
 
 (defn x [v] (nth v 0))
 (defn y [v] (nth v 1))
@@ -19,23 +20,42 @@
   (apply mapv / vecs))
 
 (defn scalar-mul [[x y z] t]
-	(vector (* t x) (* t y) (* t z)))
+  (vector (* t x) (* t y) (* t z)))
 (defn scalar-div [v t]
   (scalar-mul v (/ 1.0 t)))
 
 (defn length-sq [[x y z]]
-	(+ (* x x) (* y y) (* z z)))
+  (+ (* x x) (* y y) (* z z)))
 (defn length [v]
-	(math/sqrt (length-sq v)))
+  (math/sqrt (length-sq v)))
 
 (defn dot [[ux uy uz] [vx vy vz]]
-	(+ (* ux vx) (* uy vy) (* uz vz)))
+  (+ (* ux vx) (* uy vy) (* uz vz)))
 (defn cross [[ux uy uz] [vx vy vz]]
-	(vector
-		(- (* uy vz) (* uz vy))
-		(- (* uz vx) (* ux vz))
-		(- (* ux vy) (* uy vx))))
+  (vector
+    (- (* uy vz) (* uz vy))
+    (- (* uz vx) (* ux vz))
+    (- (* ux vy) (* uy vx))))
 
 (defn unit [[x y z :as v]]
-	(let [l (double (length v))]
-		(vector (/ x l) (/ y l) (/ z l))))
+  (let [l (double (length v))]
+    (vector (/ x l) (/ y l) (/ z l))))
+
+(defn random [min max]
+  [(utils/random-double min max)
+   (utils/random-double min max)
+   (utils/random-double min max)])
+
+(defn random-unit-vector []
+  (loop []
+    (let [p (random -1.0 1.0)
+          lensq (length-sq p)]
+      (if (and (<= lensq 1.0) (> lensq 1e-160))
+        (scalar-div p (Math/sqrt lensq))
+        (recur)))))
+
+(defn random-on-hemisphere [normal]
+  (let [on-unit-sphere (random-unit-vector)]
+    (if (> (dot on-unit-sphere normal) 0.0)
+      on-unit-sphere
+      (scalar-mul on-unit-sphere -1))))

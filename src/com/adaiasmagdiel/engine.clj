@@ -10,6 +10,7 @@
 (def camera-center (vec3/create 0 0 0))
 (def samples-per-pixel 10)
 (def pixel-samples-scale (/ 1.0 samples-per-pixel))
+(def max-depth 10)
 
 (def viewport-u (vec3/create s/VIEWPORT_WIDTH 0 0))
 (def viewport-v (vec3/create 0 (* -1 s/VIEWPORT_HEIGHT) 0))
@@ -34,11 +35,19 @@
      (vec3/scalar-mul (vec3/create 1.0 1.0 1.0) (- 1.0 a))
      (vec3/scalar-mul (vec3/create 0.5 0.7 1.0) a))))
 
-(defn ray-color [ray world]
-  (if-let [rec (h/hit-world world ray 0.001 Double/POSITIVE_INFINITY)]
-    (let [n (:normal rec)]
-      (vec3/scalar-mul (vec3/add n [1 1 1]) 0.5))
-    (paint-sky ray)))
+(defn ray-color
+  ([ray world] (ray-color ray world max-depth))
+  ([ray world depth]
+    (if (<= depth 0)
+      [0 0 0]
+
+      (if-let [rec (h/hit-world world ray 0 Double/POSITIVE_INFINITY)]
+        (let [n (:normal rec)
+              p (:point rec)
+              direction (vec3/random-on-hemisphere n)]
+          (vec3/scalar-mul (ray-color (ray/create p direction) world (dec depth)) 0.5))
+        
+        (paint-sky ray)))))
 
 (defn write-color [color]
   (map (fn [c]
@@ -67,4 +76,3 @@
 
 (defn compute-pixel-color [x y]
   (write-color (pixel-color x y)))
-
