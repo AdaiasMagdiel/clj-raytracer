@@ -4,7 +4,9 @@
             [com.adaiasmagdiel.raytracer.ray :as ray]
             [com.adaiasmagdiel.raytracer.sphere :as sphere]
             [com.adaiasmagdiel.raytracer.hittable :as h]
-            [com.adaiasmagdiel.utils :as utils]))
+            [com.adaiasmagdiel.utils :as utils]
+            [com.adaiasmagdiel.raytracer.material :as mat]
+            [clojure.math :as math]))
 
 (def focal-length 1.0)
 (def camera-center (vec3/create 0 0 0))
@@ -25,34 +27,46 @@
                           (vec3/scalar-div viewport-v 2)))
 (def pixel00-loc (vec3/add viewport-upper-left (vec3/scalar-mul (vec3/add pixel-delta-u pixel-delta-v) 0.5)))
 
-(def world [(sphere/create (vec3/create 0 0 -1) 0.5)
-            (sphere/create (vec3/create 0 -100.5 -1) 100)])
+(def world [(sphere/create (vec3/create 0.0 -100.5 -1.0) 100 (mat/->Lambertian [0.8 0.8 0]))
+            (sphere/create (vec3/create 0.0 0.0 -1.2) 0.5 (mat/->Lambertian [0.1 0.2 0.5]))
+            (sphere/create (vec3/create -1.0 0.0 -1.0) 0.5 (mat/->Metal [0.8 0.8 0.8]))
+            (sphere/create (vec3/create 1.0 0.0 -1.0) 0.5 (mat/->Metal [0.8 0.6 0.2]))])
 
 (defn paint-sky [r]
-  (let [unity-direction (vec3/unit (:direction r))
-        a (* 0.5 (+ 1.0 (vec3/y unity-direction)))]
+  (let [unit-direction (vec3/unit (:direction r))
+        a (* 0.5 (+ 1.0 (vec3/y unit-direction)))]
     (vec3/add
      (vec3/scalar-mul (vec3/create 1.0 1.0 1.0) (- 1.0 a))
      (vec3/scalar-mul (vec3/create 0.5 0.7 1.0) a))))
 
 (defn ray-color
-  ([ray world] (ray-color ray world max-depth))
+  ([ray world] (ray-color ray world 50))
   ([ray world depth]
-    (if (<= depth 0)
-      [0 0 0]
+   (if (<= depth 0)
+     [0 0 0]
 
-      (if-let [rec (h/hit-world world ray 0 Double/POSITIVE_INFINITY)]
-        (let [n (:normal rec)
-              p (:point rec)
-              direction (vec3/random-on-hemisphere n)]
-          (vec3/scalar-mul (ray-color (ray/create p direction) world (dec depth)) 0.5))
-        
-        (paint-sky ray)))))
+     (if-let [rec (h/hit-world world ray 0.001 Double/POSITIVE_INFINITY)]
+       (let [material (:material rec)]
+         (if-let [scatter-result (mat/scatter material ray rec)]
+           
+           (let [{:keys [scattered attenuation]} scatter-result]
+             (vec3/mul attenuation (ray-color scattered world (dec depth))))
+           
+           [0 0 0]))
+
+       (paint-sky ray)))))
+
+(defn linear-to-gama [linear-component]
+  (if (> linear-component 0)
+    (math/sqrt linear-component)
+    0))
 
 (defn write-color [color]
-  (map (fn [c]
-         (int (* 256 (utils/clamp c 0.0 0.999))))
-       color))
+  (->> color
+       (map linear-to-gama)
+       (map #(utils/clamp % 0.0 0.999))
+       (map #(* 256 %))
+       (map int)))
 
 (defn get-ray [i j]
   (let [u (+ i (rand))

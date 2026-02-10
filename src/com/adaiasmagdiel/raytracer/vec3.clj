@@ -59,3 +59,12 @@
     (if (> (dot on-unit-sphere normal) 0.0)
       on-unit-sphere
       (scalar-mul on-unit-sphere -1))))
+
+(defn near-zero? [[x y z]]
+  (let [s 1e-8]
+    (and (< (abs x) s) 
+         (< (abs y) s) 
+         (< (abs z) s))))
+
+(defn reflect [v n]
+  (sub v (scalar-mul n (* 2 (dot v n)))))

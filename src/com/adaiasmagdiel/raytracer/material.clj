@@ -1,0 +1,34 @@
+(ns com.adaiasmagdiel.raytracer.material
+  (:require [com.adaiasmagdiel.raytracer.vec3 :as vec3]
+            [com.adaiasmagdiel.raytracer.ray :as ray]))
+
+(defprotocol Material
+  (scatter [this ray-in hit-record]
+    "Returns a map containing the scattered ray and attenuation color, or nil if no scatter occurs."))
+
+(defrecord Lambertian [albedo]
+  Material
+  (scatter [this ray-in hit-record]
+    (let [scatter-direction (vec3/add (:normal hit-record) (vec3/random-unit-vector))
+          
+          direction (if (vec3/near-zero? scatter-direction)
+                      (:normal hit-record)
+                      scatter-direction)
+          
+          scattered (ray/create (:point hit-record) direction)]
+      
+      {:scattered   scattered
+       :attenuation albedo
+       :hit?        true})))
+
+(defrecord Metal [albedo]
+  Material
+  (scatter [this ray-in hit-record]
+    (let [unit-direction (vec3/unit (:direction ray-in))
+          reflected      (vec3/reflect unit-direction (:normal hit-record))
+          scattered      (ray/create (:point hit-record) reflected)]
+    
+    (when (> (vec3/dot (:direction scattered) (:normal hit-record)) 0)
+      {:scattered   scattered
+       :attenuation albedo
+       :hit?        true}))))

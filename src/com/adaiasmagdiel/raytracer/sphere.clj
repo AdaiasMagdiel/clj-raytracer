@@ -32,14 +32,13 @@
 
         (when t
           (let [p (ray/at ray t)
-                outward-normal (vec3/scalar-div
-                                (vec3/sub p center)
-                                radius)
-                hr (h/hit-record t p outward-normal false)]
+                outward-normal (vec3/unit (vec3/sub p center))
+                hr (h/hit-record t p outward-normal false (:material sphere))]
             (h/set-face-normal hr ray outward-normal)))))))
 
-(defn create [center radius]
+(defn create [center radius material]
   {:type :sphere
    :center center
    :radius radius
+   :material material
    :hit hit})

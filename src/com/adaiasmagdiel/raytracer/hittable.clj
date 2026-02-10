@@ -2,16 +2,17 @@
   (:require
     [com.adaiasmagdiel.raytracer.vec3 :as vec3]))
 
-(defn hit-record [t p normal front-face]
+(defn hit-record [t p normal front-face material]
   {:t t
    :point p
    :normal normal
-   :front-face front-face})
+   :front-face front-face
+   :material material})
 
 (defn set-face-normal [hr ray outward-normal]
   (let [front-face (< (vec3/dot (:direction ray) outward-normal) 0)
         normal (if front-face outward-normal (vec3/scalar-mul outward-normal -1))]
-    (hit-record (:t hr) (:point hr) normal front-face)))
+    (hit-record (:t hr) (:point hr) normal front-face (:material hr))))
 
 (defn hit-world
   [world ray tmin tmax]
