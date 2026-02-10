@@ -29,8 +29,8 @@
 
 (def world [(sphere/create (vec3/create 0.0 -100.5 -1.0) 100 (mat/->Lambertian [0.8 0.8 0]))
             (sphere/create (vec3/create 0.0 0.0 -1.2) 0.5 (mat/->Lambertian [0.1 0.2 0.5]))
-            (sphere/create (vec3/create -1.0 0.0 -1.0) 0.5 (mat/->Metal [0.8 0.8 0.8]))
-            (sphere/create (vec3/create 1.0 0.0 -1.0) 0.5 (mat/->Metal [0.8 0.6 0.2]))])
+            (sphere/create (vec3/create -1.0 0.0 -1.0) 0.5 (mat/->Metal [0.8 0.8 0.8] 0.3))
+            (sphere/create (vec3/create 1.0 0.0 -1.0) 0.5 (mat/->Metal [0.8 0.6 0.2] 1.0))])
 
 (defn paint-sky [r]
   (let [unit-direction (vec3/unit (:direction r))
@@ -40,7 +40,7 @@
      (vec3/scalar-mul (vec3/create 0.5 0.7 1.0) a))))
 
 (defn ray-color
-  ([ray world] (ray-color ray world 50))
+  ([ray world] (ray-color ray world max-depth))
   ([ray world depth]
    (if (<= depth 0)
      [0 0 0]

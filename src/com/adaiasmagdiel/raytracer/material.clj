@@ -21,14 +21,21 @@
        :attenuation albedo
        :hit?        true})))
 
-(defrecord Metal [albedo]
+(defrecord Metal [albedo fuzz]
   Material
   (scatter [this ray-in hit-record]
-    (let [unit-direction (vec3/unit (:direction ray-in))
-          reflected      (vec3/reflect unit-direction (:normal hit-record))
-          scattered      (ray/create (:point hit-record) reflected)]
-    
-    (when (> (vec3/dot (:direction scattered) (:normal hit-record)) 0)
-      {:scattered   scattered
-       :attenuation albedo
-       :hit?        true}))))
+    (let [actual-fuzz (if (< fuzz 1.0) fuzz 1.0)
+
+          unit-dir    (vec3/unit (:direction ray-in))
+          reflected   (vec3/reflect unit-dir (:normal hit-record))
+
+          fuzzed-dir  (vec3/add
+                       (vec3/unit reflected)
+                       (vec3/scalar-mul (vec3/random-unit-vector) actual-fuzz))
+
+          scattered-ray (ray/create (:point hit-record) fuzzed-dir)]
+
+      (when (> (vec3/dot (:direction scattered-ray) (:normal hit-record)) 0)
+        {:scattered   scattered-ray
+         :attenuation albedo
+         :hit?        true}))))
