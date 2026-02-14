@@ -1,7 +1,6 @@
 (ns com.adaiasmagdiel.raytracer.vec3
   (:require [clojure.math :as math]
-            [com.adaiasmagdiel.utils :as utils]
-            [com.adaiasmagdiel.raytracer.vec3 :as vec3]))
+            [com.adaiasmagdiel.utils :as utils]))
 
 (defn create
   ([] (create 0 0 0))
@@ -102,7 +101,7 @@
 
 (defn random-in-unit-disk []
   (loop []
-    (let [p (vec3/create (utils/random-double -1 1) (utils/random-double -1 1) 0)]
-      (if (< (vec3/length-sq p) 1)
+    (let [p (create (utils/random-double -1 1) (utils/random-double -1 1) 0)]
+      (if (< (length-sq p) 1)
         p
         (recur)))))
