@@ -50,6 +50,11 @@
        (map #(* 256 %))
        (map int)))
 
+(defn defocus-disk-sample []
+  (let [p (vec3/random-in-unit-disk)]
+    (vec3/add
+     s/camera-center (vec3/scalar-mul s/defocus-disk-u (vec3/x p)) (vec3/scalar-mul s/defocus-disk-v (vec3/y p)))))
+
 (defn get-ray [i j]
   (let [u (+ i (rand))
         v (+ j (rand))
@@ -57,8 +62,9 @@
         (vec3/add (vec3/scalar-mul s/pixel-delta-v v)
                   (vec3/add s/pixel00-loc
                             (vec3/scalar-mul s/pixel-delta-u u)))
-        direction (vec3/sub pixel-center s/camera-center)]
-    (ray/create s/camera-center direction)))
+        origin (if (<= s/defocus-angle 0) s/camera-center (defocus-disk-sample)) 
+        direction (vec3/sub pixel-center origin)]
+    (ray/create origin direction)))
 
 (defn pixel-color [i j]
   (let [accumulated
