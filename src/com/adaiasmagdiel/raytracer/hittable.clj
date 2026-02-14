@@ -1,28 +1,41 @@
 (ns com.adaiasmagdiel.raytracer.hittable 
   (:require
-    [com.adaiasmagdiel.raytracer.vec3 :as vec3]))
+    [com.adaiasmagdiel.raytracer.vec3 :as vec3])
+  (:import [com.adaiasmagdiel.raytracer.ray Ray]
+           [com.adaiasmagdiel.raytracer.vec3 Vec3]))
 
-(defn hit-record [t p normal front-face material]
-  {:t t
-   :point p
-   :normal normal
-   :front-face front-face
-   :material material})
+(deftype HitRecord
+         [^double t
+          ^Vec3 point
+          ^Vec3 normal
+          ^boolean front-face
+          material])
 
-(defn set-face-normal [hr ray outward-normal]
-  (let [front-face (< (vec3/dot (:direction ray) outward-normal) 0)
-        normal (if front-face outward-normal (vec3/scalar-mul outward-normal -1))]
-    (hit-record (:t hr) (:point hr) normal front-face (:material hr))))
+(definterface IHittable
+  (hit [ray tmin tmax]))
+
+(defn set-face-normal
+  [^HitRecord hr ^Ray ray outward-normal]
+  (let [^Vec3 dir (.direction ray)
+        front-face (< (vec3/dot dir outward-normal) 0.0)
+        normal (if front-face
+                 outward-normal
+                 (vec3/scalar-mul outward-normal -1.0))]
+    (HitRecord. (.t hr)
+                (.point hr)
+                normal
+                front-face
+                (.material hr))))
 
 (defn hit-world
-  [world ray tmin tmax]
-  (loop [objects world
+  [^objects world ^Ray ray ^double tmin ^double tmax]
+  (loop [i 0
          closest tmax
          hit-record nil]
-    (if (empty? objects)
-      hit-record
-      (let [obj (first objects)
-            hit ((:hit obj) obj ray tmin closest)]
+    (if (< i (alength world))
+      (let [^IHittable obj (aget world i)
+            hit (.hit obj ray tmin closest)]
         (if hit
-          (recur (rest objects) (:t hit) hit)
-          (recur (rest objects) closest hit-record))))))
+          (recur (unchecked-inc i) (.t ^HitRecord hit) hit)
+          (recur (unchecked-inc i) closest hit-record)))
+      hit-record)))
