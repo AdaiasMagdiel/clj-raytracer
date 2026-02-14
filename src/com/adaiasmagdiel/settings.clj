@@ -15,8 +15,9 @@
 (def ^:const lookfrom (vec3/create -2 2 1))
 (def ^:const lookat   (vec3/create 0 0 -1))
 (def ^:const vup      (vec3/create 0 1 0))
+(def ^:const defocus-angle 0)
+(def ^:const focus-dist 10)
 
-(def ^:const focal-length (vec3/length (vec3/sub lookfrom lookat)))
 (def ^:const theta (math/to-radians vfov))
 (def ^:const h (math/tan (/ theta 2)))
 
@@ -24,12 +25,13 @@
 (def ^:const u (vec3/unit (vec3/cross vup w)))
 (def ^:const v (vec3/cross w u))
 
-(def ^:const VIEWPORT_HEIGHT (* 2 h focal-length))
+
+(def ^:const VIEWPORT_HEIGHT (* 2 h focus-dist))
 (def ^:const VIEWPORT_WIDTH (* VIEWPORT_HEIGHT (/ (double WIDTH) HEIGHT)))
 
 (def ^:const camera-center lookfrom)
 (def ^:const samples-per-pixel 100)
-(def ^:const pixel-samples-scale (/ 1.0 samples-per-pixel))
+(def ^:const pixel-samples-scale (double (/ 1.0 samples-per-pixel)))
 (def ^:const max-depth 50)
 
 (def ^:const viewport-u (vec3/scalar-mul u VIEWPORT_WIDTH))
@@ -38,9 +40,13 @@
 (def ^:const pixel-delta-u (vec3/scalar-div viewport-u WIDTH))
 (def ^:const pixel-delta-v (vec3/scalar-div viewport-v HEIGHT))
 
+(def ^:const defocus-radius (* focus-dist (math/tan (math/to-radians (/ defocus-angle 2)))))
+(def ^:const defocus-disk-u (vec3/scalar-mul u defocus-radius))
+(def ^:const defocus-disk-v (vec3/scalar-mul v defocus-radius))
+
 (def ^:const viewport-upper-left (vec3/sub
                                   camera-center
-                                  (vec3/scalar-mul w focal-length)
+                                  (vec3/scalar-mul w focus-dist)
                                   (vec3/scalar-div viewport-u 2)
                                   (vec3/scalar-div viewport-v 2)))
 (def ^:const pixel00-loc (vec3/add viewport-upper-left (vec3/scalar-mul (vec3/add pixel-delta-u pixel-delta-v) 0.5)))
