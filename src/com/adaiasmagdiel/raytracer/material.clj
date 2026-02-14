@@ -1,23 +1,28 @@
 (ns com.adaiasmagdiel.raytracer.material
   (:require [com.adaiasmagdiel.raytracer.vec3 :as vec3]
             [com.adaiasmagdiel.raytracer.ray :as ray]
-            [clojure.math :as math]))
+            [clojure.math :as math])
+  (:import [com.adaiasmagdiel.raytracer.ray Ray]
+           [com.adaiasmagdiel.raytracer.vec3 Vec3]
+           [com.adaiasmagdiel.raytracer.hittable HitRecord]
+           [java.util.concurrent ThreadLocalRandom]))
 
 (defprotocol Material
-  (scatter [this ray-in hit-record]
-    "Returns a map containing the scattered ray and attenuation color, or nil if no scatter occurs."))
+  (scatter [this ray-in hit-record]))
 
 (defrecord Lambertian [albedo]
   Material
   (scatter [this ray-in hit-record]
-    (let [scatter-direction (vec3/add (:normal hit-record) (vec3/random-unit-vector))
+    (let [^HitRecord hr hit-record
+          normal (.normal hr)
+          point  (.point hr)
           
+          scatter-direction (vec3/add normal
+                                      (vec3/random-unit-vector))
           direction (if (vec3/near-zero? scatter-direction)
-                      (:normal hit-record)
+                      normal
                       scatter-direction)
-          
-          scattered (ray/create (:point hit-record) direction)]
-      
+          scattered (ray/create point direction)]
       {:scattered   scattered
        :attenuation albedo
        :hit?        true})))
@@ -25,18 +30,25 @@
 (defrecord Metal [albedo fuzz]
   Material
   (scatter [this ray-in hit-record]
-    (let [actual-fuzz (if (< fuzz 1.0) fuzz 1.0)
+    (let [^HitRecord hr hit-record
+          normal (.normal hr)
+          point  (.point hr)
+          
+          ^Ray r ray-in
+          actual-fuzz (if (< fuzz 1.0) fuzz 1.0)
 
-          unit-dir    (vec3/unit (:direction ray-in))
-          reflected   (vec3/reflect unit-dir (:normal hit-record))
+          ^Vec3 in-dir (.direction r)
+          unit-dir     (vec3/unit in-dir)
+          reflected    (vec3/reflect unit-dir normal)
 
-          fuzzed-dir  (vec3/add
-                       (vec3/unit reflected)
-                       (vec3/scalar-mul (vec3/random-unit-vector) actual-fuzz))
+          fuzzed-dir   (vec3/add
+                        (vec3/unit reflected)
+                        (vec3/scalar-mul (vec3/random-unit-vector) actual-fuzz))
 
-          scattered-ray (ray/create (:point hit-record) fuzzed-dir)]
+          scattered-ray (ray/create point fuzzed-dir)
+          ^Vec3 scattered-dir (.direction scattered-ray)]
 
-      (when (> (vec3/dot (:direction scattered-ray) (:normal hit-record)) 0)
+      (when (> (vec3/dot scattered-dir normal) 0)
         {:scattered   scattered-ray
          :attenuation albedo
          :hit?        true}))))
@@ -49,22 +61,33 @@
 (defrecord Dielectric [refraction-index]
   Material
   (scatter [this ray-in hit-record]
-    (let [attenuation [1.0 1.0 1.0]
-          normal      (:normal hit-record)
-          ri          (if (:front-face hit-record)
-                        (/ 1.0 refraction-index)
-                        refraction-index)
-          unit-dir    (vec3/unit (:direction ray-in))
-          cos-theta (min (vec3/dot (vec3/scalar-mul unit-dir -1) normal) 1.0)
-          sin-theta (math/sqrt (- 1.0 (* cos-theta cos-theta)))
-          
-          cannot_refract  (> (* ri sin-theta) 1.0)
-          direction      (if (or
-                              cannot_refract
-                              (> (reflectance cos-theta ri) (rand)))
-                           (vec3/reflect unit-dir normal)
-                           (vec3/refract unit-dir normal ri))]
+    (let [^HitRecord hr hit-record
+         normal (.normal hr)
+         point  (.point hr)
+         front-face (.front-face hr)
+         
+         ^Ray r ray-in
+         attenuation (vec3/create 1.0 1.0 1.0)
+         
+         ri (if front-face
+              (/ 1.0 refraction-index)
+              refraction-index)
+         
+         ^Vec3 in-dir (.direction r)
+         unit-dir     (vec3/unit in-dir)
+         
+         cos-theta (min (vec3/dot (vec3/scalar-mul unit-dir -1.0) normal) 1.0)
+         sin-theta (math/sqrt (- 1.0 (* cos-theta cos-theta)))
+         
+         rng (ThreadLocalRandom/current)
+         cannot-refract (> (* ri sin-theta) 1.0)
+         
+         direction (if (or cannot-refract
+                           (> (reflectance cos-theta ri)
+                              (.nextDouble rng)))
+                     (vec3/reflect unit-dir normal)
+                     (vec3/refract unit-dir normal ri))]
 
-      {:scattered   (ray/create (:point hit-record) direction)
-       :attenuation attenuation
-       :hit?        true})))
+    {:scattered   (ray/create point direction)
+     :attenuation attenuation
+     :hit?        true})))
