@@ -22,3 +22,9 @@
     (< x min) min
     (> x max) max
     :else x))
+
+(defn clamp-double ^double [^double x ^double min ^double max]
+  (cond
+    (< x min) min
+    (> x max) max
+    :else x))
